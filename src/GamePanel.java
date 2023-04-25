@@ -2,15 +2,16 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.util.Arrays;
 import java.util.Random;
 
-
 public class GamePanel extends JPanel {
-
 
     private static final Object lock = new Object();
     private CellPanel[][] allPanels;
     private Block[] shape;
+
+    private int dropSpeed;
 
 
     public GamePanel() {
@@ -21,13 +22,10 @@ public class GamePanel extends JPanel {
         this.setFocusable(true);
         this.requestFocusInWindow();
         this.paintPanels();
-
-
+        this.dropSpeed = 1000;
 
         new Thread( () -> {
-            this.createShape();
-            this.spawn();
-            this.dropDown(this.shape);
+            this.startTurn();
             synchronized (lock){
             while(true) {
                     try {
@@ -35,14 +33,22 @@ public class GamePanel extends JPanel {
                     } catch (InterruptedException e) {
                         throw new RuntimeException(e);
                     }
-                this.createShape();
-                this.spawn();
-                this.dropDown(this.shape);
+                this.startTurn();
             }
             }
         }).start();
 
+        this.addControls();
 
+//       this.dropDown(new Block[]{new Block(0,4, Color.RED), new Block(1,4,Color.RED),new Block(2,4,Color.RED)});
+    }
+
+    private void startTurn(){
+        this.createShape();
+        this.spawn();
+        this.dropDown(this.shape);
+    }
+    private void addControls(){
         this.addKeyListener(new KeyListener() {
             @Override
             public void keyTyped(KeyEvent e) {
@@ -51,7 +57,9 @@ public class GamePanel extends JPanel {
 
             @Override
             public void keyPressed(KeyEvent e) {
-
+                if (e.getKeyCode() == KeyEvent.VK_DOWN){
+                    dropSpeed = 100;
+                }
             }
 
             @Override
@@ -64,30 +72,45 @@ public class GamePanel extends JPanel {
                     } else {
                         direction = 1;
                     }
+                    updatePosition(shape, true);
                     success = checkIfClearToMoveHorizontally(shape, direction);
 
                     if (success) {
-                        updatePosition(shape, true);
                         makeMove(direction);
-                        updatePosition(shape, false);
-
                     }
+                    updatePosition(shape, false);
                 }
 
                 if (e.getKeyCode() == KeyEvent.VK_UP) {
                     rotate();
                 }
+                if (e.getKeyCode() == KeyEvent.VK_DOWN){
+                    dropSpeed = 1000;
+                }
             }
         });
-
-
-//       this.dropDown(new Block[]{new Block(0,4, Color.RED), new Block(1,4,Color.RED),new Block(2,4,Color.RED)});
     }
 
     private void rotate() {
-        int[] clockWiseRotationMatrix =
-                {0, 1,
-                -1, 0};
+        int[][] distancesFromCenter = new int[this.shape.length][2];
+        int[][] indexesInGrid = new int[this.shape.length][2];
+        int i = 0;
+
+        this.updatePosition(this.shape, true);
+        if(this.canRotate(distancesFromCenter,indexesInGrid)) {
+            for (Block block : this.shape){
+                block.setDistanceFromCenter(distancesFromCenter[i][0], distancesFromCenter[i][1]);
+                block.getIndex()[0] = indexesInGrid[i][0];
+                block.getIndex()[1] = indexesInGrid[i][1];
+                i++;
+            }
+        }
+        this.updatePosition(this.shape, false);
+    }
+
+    private boolean canRotate(int[][] distancesFromCenter, int[][] indexesInGrid){
+        int[] clockWiseRotationMatrix = {0, 1,
+                                        -1, 0};
         Block center = null;
         for (Block block : this.shape) {
             if (block.isCenter()) {
@@ -95,13 +118,28 @@ public class GamePanel extends JPanel {
                 break;
             }
         }
-        this.updatePosition(this.shape,true);
-        for (Block block:this.shape) {
-            int[] indexes = block.multiplyRotationMatrix(clockWiseRotationMatrix);
-            block.getIndex()[0] = center.getIndex()[0] + indexes[0];
-            block.getIndex()[1] = center.getIndex()[1] + indexes[1];
+        int i = 0;
+        boolean canRotate = false;
+        if(center != null) {
+            for (Block block : this.shape) {
+                distancesFromCenter[i] = block.multiplyRotationMatrix(clockWiseRotationMatrix);
+                indexesInGrid[i][0] = center.getIndex()[0] + distancesFromCenter[i][0];
+                indexesInGrid[i][1] = center.getIndex()[1] + distancesFromCenter[i][1];
+                if (indexesInGrid[i][0] >= 20 || indexesInGrid[i][1] < 0
+                     || indexesInGrid[i][1] >= 10 || indexesInGrid[i][0] < 0 ||
+                        this.allPanels[indexesInGrid[i][0]][indexesInGrid[i][1]].isOccupied()) {
+                    canRotate = false;
+                    break;
+                }
+                i++;
+                if (i == this.shape.length) {
+                    canRotate = true;
+
+                }
+            }
         }
-        this.updatePosition(this.shape,false);
+
+        return canRotate;
     }
 
     private boolean checkIfClearToMoveHorizontally(Block[] shape, int direction) {
@@ -110,11 +148,11 @@ public class GamePanel extends JPanel {
         int i = 0;
         for (Block block : shape) {
             newColumns[i] = block.getIndex()[1] + direction;
-            if (newColumns[i] >= 0 && newColumns[i] < 10) {
-                result = true;
-            } else {
+            if (newColumns[i] < 0 || newColumns[i] >= 10 || this.allPanels[block.getIndex()[0]][block.getIndex()[1]+direction].isOccupied()) {
                 result = false;
                 break;
+            } else {
+                result = true;
             }
             i++;
         }
@@ -132,14 +170,9 @@ public class GamePanel extends JPanel {
     }
 
     private void createShape() {
-        Random randomColor = new Random();
-        int colorIndex = randomColor.nextInt(0, Constants.BLOCK_COLORS.length);
-        this.shape = new Block[]{
-                new Block(0, 5, Constants.BLOCK_COLORS[colorIndex], false),
-                new Block(0, 6, Constants.BLOCK_COLORS[colorIndex], false),
-                new Block(1, 5, Constants.BLOCK_COLORS[colorIndex], true),
-                new Block(2, 5, Constants.BLOCK_COLORS[colorIndex], false),
-        };
+        Random random = new Random();
+        int colorIndex = random.nextInt(0, Constants.BLOCK_COLORS.length);
+        this.shape = deepCopy(Constants.SHAPES[random.nextInt(Constants.SHAPES.length)],colorIndex);
 
         for (Block block : this.shape) {
             if (block.isCenter()) {
@@ -148,6 +181,14 @@ public class GamePanel extends JPanel {
             }
         }
 
+    }
+
+    private Block[] deepCopy(Block[] arr, int color){
+        Block[] shape = new Block[arr.length];
+        for (int i = 0; i < arr.length; i++) {
+            shape[i] = new Block(arr[i],Constants.BLOCK_COLORS[color]);
+        }
+        return shape;
     }
 
     private void generateDistanceFromCenter(int[] index) {
@@ -175,21 +216,20 @@ public class GamePanel extends JPanel {
             synchronized (lock) {
                 while (true) {
                     try {
+                        Thread.sleep(this.dropSpeed);
+                        this.updatePosition(shape, true);
                         if (this.checkIfClearToMoveDown(shape)) {
-
-                            this.updatePosition(shape, true);
                             this.moveDown(shape);
                             this.updatePosition(shape, false);
-
-                            Thread.sleep(1000);
                         } else {
+                            this.updatePosition(shape, false);
                             break;
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
-
                 }
+                //Break lines if needed and update the board accordingly
                 lock.notify();
             }
         }).start();
@@ -197,8 +237,9 @@ public class GamePanel extends JPanel {
 
     private boolean checkIfClearToMoveDown(Block[] shape){
         boolean res = true;
+
         for (Block block : shape){
-            if(block.getIndex()[0] >= 19){
+            if(block.getIndex()[0] >= 19 || allPanels[block.getIndex()[0] + 1][block.getIndex()[1]].isOccupied()){
                 res = false;
                 break;
             }
