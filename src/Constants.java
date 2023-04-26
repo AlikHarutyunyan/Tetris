@@ -17,47 +17,47 @@ public class Constants {
     };
 
     public static final Block[][] SHAPES = new Block[][]{
-//            new Block[]{
-//                    new Block(0, 4,  false),
-//                    new Block(1, 4,  false),
-//                    new Block(1, 5,  true),
-//                    new Block(1, 6,  false),
-//            },
-//            new Block[]{
-//                    new Block(0, 6,  false),
-//                    new Block(1, 4,  false),
-//                    new Block(1, 5,  true),
-//                    new Block(1, 6,  false),
-//            },
-//            new Block[]{
-//                    new Block(0, 5,  false),
-//                    new Block(0, 4,  false),
-//                    new Block(1, 5,  false),
-//                    new Block(1, 4,  false),
-//            },
-//            new Block[]{
-//                    new Block(0, 3,  false),
-//                    new Block(0, 4,  false),
-//                    new Block(0, 5,  true),
-//                    new Block(0, 6,  false),
-//            },
             new Block[]{
+                    new Block(0, 4,  false),
+                    new Block(1, 4,  false),
+                    new Block(1, 5,  true),
+                    new Block(1, 6,  false),
+            },
+            new Block[]{
+                    new Block(0, 6,  false),
+                    new Block(1, 4,  false),
+                    new Block(1, 5,  true),
+                    new Block(1, 6,  false),
+            },
+            new Block[]{
+                    new Block(0, 5,  false),
+                    new Block(0, 4,  false),
+                    new Block(1, 5,  false),
+                    new Block(1, 4,  false),
+            },
+            new Block[]{
+                    new Block(0, 3,  false),
+                    new Block(0, 4,  false),
                     new Block(0, 5,  true),
                     new Block(0, 6,  false),
-                    new Block(1, 5,  true),
-                    new Block(1, 4,  false),
             },
-            new Block[]{
-                    new Block(0, 5,  true),
-                    new Block(0, 4,  false),
-                    new Block(1, 5,  true),
-                    new Block(1, 6,  false),
-            },
-            new Block[]{
-                    new Block(0, 5,  true),
-                    new Block(1, 4,  false),
-                    new Block(1, 5,  true),
-                    new Block(1, 6,  false),
-            },
+//            new Block[]{
+//                    new Block(0, 5,  true),
+//                    new Block(0, 6,  false),
+//                    new Block(1, 5,  true),
+//                    new Block(1, 4,  false),
+//            },
+//            new Block[]{
+//                    new Block(0, 5,  true),
+//                    new Block(0, 4,  false),
+//                    new Block(1, 5,  true),
+//                    new Block(1, 6,  false),
+//            },
+//            new Block[]{
+//                    new Block(0, 5,  true),
+//                    new Block(1, 4,  false),
+//                    new Block(1, 5,  true),
+//                    new Block(1, 6,  false),
+//            },
     };
 }

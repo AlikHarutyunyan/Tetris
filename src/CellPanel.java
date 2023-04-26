@@ -3,19 +3,18 @@ import java.awt.*;
 
 public class CellPanel extends JPanel {
 
-    private boolean isOccupied;
+    private Block currentBlock;
     public CellPanel(){
         this.setLayout(null);
         this.setBackground(new Color(4, 20, 30));
     }
 
-    public boolean isOccupied() {
-        return isOccupied;
+    public Block getCurrentBlock() {
+        return currentBlock;
     }
 
-    public void setOccupied(boolean occupied) {
-        this.isOccupied = occupied;
-
+    public void setCurrentBlock(Block currentBlock) {
+        this.currentBlock = currentBlock;
     }
 
     public void removeBlock(){

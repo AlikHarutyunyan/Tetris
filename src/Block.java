@@ -18,10 +18,12 @@ public class Block extends JPanel {
         this.isCenter = isCenter;
     }
     public Block(Block other, Color color) {
-        this.setBorder(BorderFactory.createEmptyBorder());
-        this.setBounds(0,0,29,29);
+       // this.setBorder(BorderFactory.createEmptyBorder());
+
+        this.setBounds(0,0,30,30);
         this.color = color;
-        this.setBackground(this.color);
+        this.setOpaque(false);
+        //this.setBackground(this.color);
         this.isCenter = other.isCenter;
 
         this.index = new int[other.index.length];
@@ -40,10 +42,19 @@ public class Block extends JPanel {
         return isCenter;
     }
 
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        g.setColor(this.color);
+        g.fillRect(0, 0, this.getWidth(), this.getHeight());
+        g.setColor(this.color.brighter());
+        g.drawRect(0,0,getWidth(),getHeight());
+
+
+    }
 
     public void calculateDistanceFromCenter(int centerRowIndex, int centerColumnIndex){
         this.distanceFromCenter = new int[]{this.index[0] - centerRowIndex, this.index[1] - centerColumnIndex };
-        System.out.println(Arrays.toString(this.distanceFromCenter));
     }
 
     public int[] multiplyRotationMatrix(int[] rotationMatrix) {
@@ -57,6 +68,10 @@ public class Block extends JPanel {
     public void setDistanceFromCenter(int newRowDistance, int newColumnDistance) {
         this.distanceFromCenter[0] = newRowDistance;
         this.distanceFromCenter[1] = newColumnDistance;
+    }
+
+    public void setRow(int row){
+        this.index[0] = row;
     }
 
 }

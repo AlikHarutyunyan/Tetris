@@ -58,6 +58,7 @@ public class GamePanel extends JPanel {
             @Override
             public void keyPressed(KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_DOWN){
+
                     dropSpeed = 100;
                 }
             }
@@ -81,10 +82,10 @@ public class GamePanel extends JPanel {
                     updatePosition(shape, false);
                 }
 
-                if (e.getKeyCode() == KeyEvent.VK_UP) {
+                else if (e.getKeyCode() == KeyEvent.VK_UP) {
                     rotate();
                 }
-                if (e.getKeyCode() == KeyEvent.VK_DOWN){
+                else if (e.getKeyCode() == KeyEvent.VK_DOWN){
                     dropSpeed = 1000;
                 }
             }
@@ -127,7 +128,7 @@ public class GamePanel extends JPanel {
                 indexesInGrid[i][1] = center.getIndex()[1] + distancesFromCenter[i][1];
                 if (indexesInGrid[i][0] >= 20 || indexesInGrid[i][1] < 0
                      || indexesInGrid[i][1] >= 10 || indexesInGrid[i][0] < 0 ||
-                        this.allPanels[indexesInGrid[i][0]][indexesInGrid[i][1]].isOccupied()) {
+                        this.allPanels[indexesInGrid[i][0]][indexesInGrid[i][1]].getCurrentBlock() != null) {
                     canRotate = false;
                     break;
                 }
@@ -148,7 +149,7 @@ public class GamePanel extends JPanel {
         int i = 0;
         for (Block block : shape) {
             newColumns[i] = block.getIndex()[1] + direction;
-            if (newColumns[i] < 0 || newColumns[i] >= 10 || this.allPanels[block.getIndex()[0]][block.getIndex()[1]+direction].isOccupied()) {
+            if (newColumns[i] < 0 || newColumns[i] >= 10 || this.allPanels[block.getIndex()[0]][block.getIndex()[1]+direction].getCurrentBlock() != null) {
                 result = false;
                 break;
             } else {
@@ -166,6 +167,11 @@ public class GamePanel extends JPanel {
     }
 
     private void spawn() {
+        for(Block block : this.shape){
+            if(allPanels[block.getIndex()[0]][block.getIndex()[1]].getCurrentBlock() != null){
+                System.out.println("Game over");
+            }
+        }
         this.updatePosition(this.shape, false);
     }
 
@@ -223,6 +229,7 @@ public class GamePanel extends JPanel {
                             this.updatePosition(shape, false);
                         } else {
                             this.updatePosition(shape, false);
+                            System.out.println("got here");
                             break;
                         }
                     } catch (Exception e) {
@@ -230,16 +237,64 @@ public class GamePanel extends JPanel {
                     }
                 }
                 //Break lines if needed and update the board accordingly
+                this.breakLines();
                 lock.notify();
             }
         }).start();
     }
 
+    private void breakLines() {
+        boolean isFull;
+        for (int i = 0; i < 20; i++) {
+            isFull = false;
+            for (int j = 0; j < 10; j++) {
+                if (allPanels[i][j].getCurrentBlock() != null) {
+                    if (j + 1 == 10) {
+                        isFull = true;
+                    }
+                }else {
+                    break;
+                }
+            }
+
+            if (isFull) {
+                for (int k = 0; k < 10; k++) {  //This is removing the full line
+                    this.allPanels[i][k].removeAll();
+                    this.allPanels[i][k].setCurrentBlock(null);
+                    allPanels[i][k].setBackground(Color.WHITE);
+                }
+                try {
+                    Thread.sleep(100);
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
+                this.repaint();
+                for (int l = i; l >= 0; l--) { //this is updating blocks that are above the full line
+                    for (int k = 0; k < 10; k++) {
+                        if(l == i){
+                            allPanels[i][k].setBackground(new Color(4, 20, 30));
+                        }else {
+                            allPanels[l][k].removeAll();
+                            if (allPanels[l][k].getCurrentBlock() != null) {
+                                allPanels[l][k].getCurrentBlock().setRow(this.allPanels[l][k].getCurrentBlock().getIndex()[0] + 1);
+                                allPanels[l + 1][k].add(allPanels[l][k].getCurrentBlock());
+                                allPanels[l + 1][k].setCurrentBlock(allPanels[l][k].getCurrentBlock());
+                                allPanels[l][k].setCurrentBlock(null);
+                            }
+                        }
+                    }
+                }
+                this.repaint();
+            }
+        }
+    }
+
+
     private boolean checkIfClearToMoveDown(Block[] shape){
         boolean res = true;
 
         for (Block block : shape){
-            if(block.getIndex()[0] >= 19 || allPanels[block.getIndex()[0] + 1][block.getIndex()[1]].isOccupied()){
+            if(block.getIndex()[0] >= 19 || allPanels[block.getIndex()[0] + 1][block.getIndex()[1]].getCurrentBlock() != null){
                 res = false;
                 break;
             }
@@ -254,21 +309,16 @@ public class GamePanel extends JPanel {
     }
 
     private void updatePosition(Block[] shape, boolean toRemove) {
-        if (toRemove) {
             for (Block block : shape) {
-                this.allPanels[block.getIndex()[0]][block.getIndex()[1]].remove(block);
-                this.allPanels[block.getIndex()[0]][block.getIndex()[1]].repaint();
-                this.allPanels[block.getIndex()[0]][block.getIndex()[1]].setOccupied(false);
+                if(toRemove) {
+                    this.allPanels[block.getIndex()[0]][block.getIndex()[1]].remove(block);
+                    this.allPanels[block.getIndex()[0]][block.getIndex()[1]].setCurrentBlock(null);
+                }else{
+                    this.allPanels[block.getIndex()[0]][block.getIndex()[1]].add(block);
+                    this.allPanels[block.getIndex()[0]][block.getIndex()[1]].setCurrentBlock(block);
+                }
             }
-        } else {
-            for (Block block : shape) {
-                this.allPanels[block.getIndex()[0]][block.getIndex()[1]].add(block);
-                this.allPanels[block.getIndex()[0]][block.getIndex()[1]].repaint();
-                this.allPanels[block.getIndex()[0]][block.getIndex()[1]].setOccupied(true);
-            }
-        }
-
-        //block.getIndex()[0]++;
+            this.repaint();
     }
 
 }
