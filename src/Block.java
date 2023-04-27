@@ -45,12 +45,11 @@ public class Block extends JPanel {
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
+        g.clearRect(0,0,getWidth(),getHeight());
         g.setColor(this.color);
         g.fillRect(0, 0, this.getWidth(), this.getHeight());
         g.setColor(this.color.brighter());
         g.drawRect(0,0,getWidth(),getHeight());
-
-
     }
 
     public void calculateDistanceFromCenter(int centerRowIndex, int centerColumnIndex){
@@ -73,5 +72,6 @@ public class Block extends JPanel {
     public void setRow(int row){
         this.index[0] = row;
     }
+
 
 }

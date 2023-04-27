@@ -2,6 +2,8 @@ import javax.swing.*;
 import java.awt.*;
 
 public class Window extends JFrame {
+    private final GamePanel GAME_PANEL;
+    public static NextShapePanel nextShapePanel;
 
     public Window(){
         this.setLayout(null);
@@ -9,7 +11,10 @@ public class Window extends JFrame {
         this.setSize(Constants.WINDOW_WIDTH,Constants.WINDOW_HEIGHT);
         this.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         this.getContentPane().setBackground(new Color(34, 34, 34));
-        this.add(new GamePanel());
+        nextShapePanel = new NextShapePanel();
+        GAME_PANEL = new GamePanel();
+        this.add(nextShapePanel);
+        this.add(GAME_PANEL);
         this.setVisible(true);
     }
 }

@@ -5,6 +5,15 @@ public class Constants {
     public static final int WINDOW_HEIGHT = 750;
     public static final int MARGIN_TOP = 10;
     public static final int GAME_PANEL_HEIGHT = 600;
+    public static final int GAME_PANEL_WIDTH = 300;
+
+    public static String MOVE_SOUND_EFFECT = "soundEffects/move.wav";
+    public static String DROP_SOUND_EFFECT = "soundEffects/softDrop.wav";
+    public static String ROTATE_SOUND_EFFECT = "soundEffects/rotate.wav";
+    public static String LINE_BREAK_SOUND_EFFECT = "soundEffects/lineBreak.wav";
+    public static String GAME_OVER_SOUND_EFFECT = "soundEffects/gameOver.wav";
+    public static String LAND_SOUND_EFFECT = "soundEffects/land.wav";
+    public static String CLEAN_UP_SOUND_EFFECT = "soundEffects/cleanUp.wav";
 
     public static final Color[] BLOCK_COLORS = {
             new Color(0xBB0606),
@@ -41,23 +50,23 @@ public class Constants {
                     new Block(0, 5,  true),
                     new Block(0, 6,  false),
             },
-//            new Block[]{
-//                    new Block(0, 5,  true),
-//                    new Block(0, 6,  false),
-//                    new Block(1, 5,  true),
-//                    new Block(1, 4,  false),
-//            },
-//            new Block[]{
-//                    new Block(0, 5,  true),
-//                    new Block(0, 4,  false),
-//                    new Block(1, 5,  true),
-//                    new Block(1, 6,  false),
-//            },
-//            new Block[]{
-//                    new Block(0, 5,  true),
-//                    new Block(1, 4,  false),
-//                    new Block(1, 5,  true),
-//                    new Block(1, 6,  false),
-//            },
+            new Block[]{
+                    new Block(0, 5,  true),
+                    new Block(0, 6,  false),
+                    new Block(1, 5,  true),
+                    new Block(1, 4,  false),
+            },
+            new Block[]{
+                    new Block(0, 5,  true),
+                    new Block(0, 4,  false),
+                    new Block(1, 5,  true),
+                    new Block(1, 6,  false),
+            },
+            new Block[]{
+                    new Block(0, 5,  true),
+                    new Block(1, 4,  false),
+                    new Block(1, 5,  true),
+                    new Block(1, 6,  false),
+            },
     };
 }

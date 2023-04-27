@@ -15,6 +15,7 @@ public class CellPanel extends JPanel {
 
     public void setCurrentBlock(Block currentBlock) {
         this.currentBlock = currentBlock;
+
     }
 
     public void removeBlock(){
