@@ -1,8 +1,5 @@
 import javax.swing.*;
-import javax.swing.border.EtchedBorder;
 import java.awt.*;
-import java.util.Arrays;
-import java.util.Random;
 
 public class Block extends JPanel {
 
@@ -20,7 +17,7 @@ public class Block extends JPanel {
     public Block(Block other, Color color) {
        // this.setBorder(BorderFactory.createEmptyBorder());
 
-        this.setBounds(0,0,30,30);
+        this.setBounds(0,0,Constants.BLOCK_SIZE,Constants.BLOCK_SIZE);
         this.color = color;
         this.setOpaque(false);
         //this.setBackground(this.color);
@@ -30,6 +27,7 @@ public class Block extends JPanel {
         for (int i = 0; i < other.index.length; i++) {
             this.index[i] = other.index[i];
         }
+        this.distanceFromCenter = new int[2];
 
     }
 
@@ -53,24 +51,24 @@ public class Block extends JPanel {
     }
 
     public void calculateDistanceFromCenter(int centerRowIndex, int centerColumnIndex){
-        this.distanceFromCenter = new int[]{this.index[0] - centerRowIndex, this.index[1] - centerColumnIndex };
+        this.distanceFromCenter = new int[]{this.index[Constants.ROW_INDEX] - centerRowIndex, this.index[Constants.COLUMN_INDEX] - centerColumnIndex };
     }
 
     public int[] multiplyRotationMatrix(int[] rotationMatrix) {
-        int newRowDistance = rotationMatrix[0] * this.distanceFromCenter[0] + rotationMatrix[1] * this.distanceFromCenter[1];
-        int newColumnDistance = rotationMatrix[2] * this.distanceFromCenter[0] + rotationMatrix[3] * this.distanceFromCenter[1];
+        int newRowDistance = rotationMatrix[0] * this.distanceFromCenter[Constants.ROW_INDEX] + rotationMatrix[1] * this.distanceFromCenter[Constants.COLUMN_INDEX];
+        int newColumnDistance = rotationMatrix[2] * this.distanceFromCenter[Constants.ROW_INDEX] + rotationMatrix[3] * this.distanceFromCenter[Constants.COLUMN_INDEX];
         //this.distanceFromCenter[0] = newRowDistance;
         //this.distanceFromCenter[1] = newColumnDistance;
         return new int[]{newRowDistance,newColumnDistance};
     }
 
     public void setDistanceFromCenter(int newRowDistance, int newColumnDistance) {
-        this.distanceFromCenter[0] = newRowDistance;
-        this.distanceFromCenter[1] = newColumnDistance;
+        this.distanceFromCenter[Constants.ROW_INDEX] = newRowDistance;
+        this.distanceFromCenter[Constants.COLUMN_INDEX] = newColumnDistance;
     }
 
     public void setRow(int row){
-        this.index[0] = row;
+        this.index[Constants.ROW_INDEX] = row;
     }
 
 

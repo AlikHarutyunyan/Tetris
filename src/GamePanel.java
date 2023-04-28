@@ -20,43 +20,93 @@ public class GamePanel extends JPanel {
 
     private int dropSpeed;
     private boolean isGameOver;
-    private Clip clip;
+    private volatile boolean isPaused;
+    private volatile boolean keyIsPressed;
+    private volatile boolean keyCanBePressed;
 
 
 
     public GamePanel() {
-        this.allPanels = new CellPanel[20][10];
+        this.allPanels = new CellPanel[Constants.ROWS_COUNT][Constants.COLUMNS_COUNT];
         this.setBounds(0, 0, Constants.GAME_PANEL_WIDTH, Constants.GAME_PANEL_HEIGHT);
-        this.setBackground(new Color(98, 3, 3));
-        this.setLayout(new GridLayout(20, 10));
+        this.setLayout(new GridLayout(Constants.ROWS_COUNT, Constants.COLUMNS_COUNT));
         this.setFocusable(true);
         this.requestFocusInWindow();
         this.paintPanels();
-        this.dropSpeed = 1000;
+        this.dropSpeed = Constants.REGULAR_DROP_SPEED;
         this.startGame();
         this.addControls();
+
     }
 
     private void startGame(){
         Random random = new Random();
-        this.shapeColor = random.nextInt(0, Constants.BLOCK_COLORS.length);
+        this.shapeColor = random.nextInt(Constants.BLOCK_COLORS.length);
         this.nextShape = deepCopy(Constants.SHAPES[random.nextInt(Constants.SHAPES.length)]);
         new Thread( () -> {
             this.startTurn();
             this.dropDown();
             synchronized (lock){
                 while(!isGameOver) {
-                    try {
-                        lock.wait();
-                    } catch (InterruptedException e) {
-                        throw new RuntimeException(e);
+                    if (!isPaused) {
+                        try {
+                            lock.wait();
+                            this.startTurn();
+                            lock.notify();
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
                     }
-                    this.startTurn();
-                    lock.notify();
                 }
-                System.out.println("Got here thread");
             }
         }).start();
+    }
+
+    private void dropDown() {
+        new Thread(() -> {
+            synchronized (lock) {
+                while (!isGameOver) {
+                    this.sleepFor(this.dropSpeed);
+                    if (!isPaused) {
+                        try {
+                            this.playSound(Constants.DROP_SOUND_EFFECT);
+                            while (keyIsPressed) {
+                                Thread.onSpinWait();
+                            }
+                            this.keyCanBePressed = false;
+                            this.updatePosition(this.shape, true);
+                            if (this.checkIfClearToMoveDown(this.shape)) {
+                                this.moveDown(this.shape);
+                                this.updatePosition(this.shape, false);
+                            } else {
+                                this.playSound(Constants.LAND_SOUND_EFFECT);
+                                this.updatePosition(this.shape, false);
+                                this.breakLines();
+                                lock.notify();
+                                try {
+                                    lock.wait();
+                                } catch (InterruptedException e) {
+                                    throw new RuntimeException(e);
+                                }
+                            }
+                            this.keyCanBePressed = true;
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+
+                }
+                lock.notify();
+            }
+        }).start();
+    }
+
+    private void sleepFor(int num){
+        try {
+            Thread.sleep(num);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
     private void startTurn(){
         this.createShape();
@@ -72,36 +122,47 @@ public class GamePanel extends JPanel {
             @Override
             public void keyPressed(KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_DOWN){
-                    dropSpeed = 100;
+                    dropSpeed = Constants.FAST_DROP_SPEED;
                 }
             }
 
             @Override
             public void keyReleased(KeyEvent e) {
-                if (e.getKeyCode() == KeyEvent.VK_DOWN){
-                    dropSpeed = 1000;
-                }else{
-                    if (e.getKeyCode() == KeyEvent.VK_LEFT || e.getKeyCode() == KeyEvent.VK_RIGHT ) {
+                if(!isGameOver) {
+                    if (e.getKeyCode() == KeyEvent.VK_DOWN) {
+                        dropSpeed = Constants.REGULAR_DROP_SPEED;
+                    }else if(e.getKeyCode() == KeyEvent.VK_ESCAPE){
+                        isPaused = !isPaused;
+                    }else {
+                        if (!isPaused) {
+                            while (!keyCanBePressed) {
+                                Thread.onSpinWait();
+                            }
+                            if (e.getKeyCode() == KeyEvent.VK_LEFT || e.getKeyCode() == KeyEvent.VK_RIGHT) {
+                                keyIsPressed = true;
 
-                        playSound(Constants.MOVE_SOUND_EFFECT);
-                        boolean success;
-                        int direction;
-                        if (e.getKeyCode() == KeyEvent.VK_LEFT) {
-                            direction = -1;
-                        } else {
-                            direction = 1;
+                                playSound(Constants.MOVE_SOUND_EFFECT);
+                                boolean success;
+                                int direction;
+                                if (e.getKeyCode() == KeyEvent.VK_LEFT) {
+                                    direction = Constants.LEFT_DIRECTION;
+                                } else {
+                                    direction = Constants.RIGHT_DIRECTION;
+                                }
+                                updatePosition(shape, true);
+                                success = checkIfClearToMoveHorizontally(shape, direction);
+
+                                if (success) {
+                                    makeMove(direction);
+                                }
+                                updatePosition(shape, false);
+                                keyIsPressed = false;
+                            } else if (e.getKeyCode() == KeyEvent.VK_UP) {
+                                keyIsPressed = true;
+                                rotate();
+                                keyIsPressed = false;
+                            }
                         }
-                        updatePosition(shape, true);
-                        success = checkIfClearToMoveHorizontally(shape, direction);
-
-                        if (success) {
-                            makeMove(direction);
-                        }
-                        updatePosition(shape, false);
-                    }
-
-                    else if (e.getKeyCode() == KeyEvent.VK_UP) {
-                        rotate();
                     }
                 }
 
@@ -113,7 +174,7 @@ public class GamePanel extends JPanel {
     private void playSound(String filePath){
         try {
             AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(new File(filePath));
-            clip = AudioSystem.getClip();
+            Clip clip = AudioSystem.getClip();
             clip.open(audioInputStream);
             clip.start();
         }catch (Exception ex){
@@ -130,9 +191,10 @@ public class GamePanel extends JPanel {
         if(this.canRotate(distancesFromCenter,indexesInGrid)) {
             this.playSound(Constants.ROTATE_SOUND_EFFECT);
             for (Block block : this.shape){
-                block.setDistanceFromCenter(distancesFromCenter[i][0], distancesFromCenter[i][1]);
-                block.getIndex()[0] = indexesInGrid[i][0];
-                block.getIndex()[1] = indexesInGrid[i][1];
+                block.setDistanceFromCenter(distancesFromCenter[i][Constants.ROW_INDEX], distancesFromCenter[i][Constants.COLUMN_INDEX]);
+                block.getIndex()[Constants.ROW_INDEX] = indexesInGrid[i][Constants.ROW_INDEX];
+                block.getIndex()[Constants.COLUMN_INDEX] = indexesInGrid[i][Constants.COLUMN_INDEX];
+                System.out.println(Arrays.toString(block.getIndex()));
                 i++;
             }
         }
@@ -140,8 +202,6 @@ public class GamePanel extends JPanel {
     }
 
     private boolean canRotate(int[][] distancesFromCenter, int[][] indexesInGrid){
-        int[] clockWiseRotationMatrix = {0, 1,
-                                        -1, 0};
         Block center = null;
         for (Block block : this.shape) {
             if (block.isCenter()) {
@@ -153,12 +213,12 @@ public class GamePanel extends JPanel {
         boolean canRotate = false;
         if(center != null) {
             for (Block block : this.shape) {
-                distancesFromCenter[i] = block.multiplyRotationMatrix(clockWiseRotationMatrix);
-                indexesInGrid[i][0] = center.getIndex()[0] + distancesFromCenter[i][0];
-                indexesInGrid[i][1] = center.getIndex()[1] + distancesFromCenter[i][1];
-                if (indexesInGrid[i][0] >= 20 || indexesInGrid[i][1] < 0
-                     || indexesInGrid[i][1] >= 10 || indexesInGrid[i][0] < 0 ||
-                        this.allPanels[indexesInGrid[i][0]][indexesInGrid[i][1]].getCurrentBlock() != null) {
+                distancesFromCenter[i] = block.multiplyRotationMatrix(Constants.CLOCK_WISE_ROTATION_MATRIX);
+                indexesInGrid[i][Constants.ROW_INDEX] = center.getIndex()[Constants.ROW_INDEX] + distancesFromCenter[i][Constants.ROW_INDEX];
+                indexesInGrid[i][Constants.COLUMN_INDEX] = center.getIndex()[Constants.COLUMN_INDEX] + distancesFromCenter[i][Constants.COLUMN_INDEX];
+                if (indexesInGrid[i][Constants.ROW_INDEX] >= Constants.ROWS_COUNT || indexesInGrid[i][Constants.COLUMN_INDEX] < 0
+                     || indexesInGrid[i][Constants.COLUMN_INDEX] >= Constants.COLUMNS_COUNT || indexesInGrid[i][Constants.ROW_INDEX] < 0 ||
+                        this.allPanels[indexesInGrid[i][Constants.ROW_INDEX]][indexesInGrid[i][Constants.COLUMN_INDEX]].getCurrentBlock() != null) {
                     canRotate = false;
                     break;
                 }
@@ -178,9 +238,9 @@ public class GamePanel extends JPanel {
         int[] newColumns = new int[shape.length];
         int i = 0;
         for (Block block : shape) {
-            newColumns[i] = block.getIndex()[1] + direction;
-            if (newColumns[i] < 0 || newColumns[i] >= 10 ||
-                    this.allPanels[block.getIndex()[0]][block.getIndex()[1]+direction].getCurrentBlock() != null) {
+            newColumns[i] = block.getIndex()[Constants.COLUMN_INDEX] + direction;
+            if (newColumns[i] < 0 || newColumns[i] >= Constants.COLUMNS_COUNT ||
+                    this.allPanels[block.getIndex()[Constants.ROW_INDEX]][block.getIndex()[Constants.COLUMN_INDEX]+direction].getCurrentBlock() != null) {
                 result = false;
                 break;
             } else {
@@ -193,13 +253,13 @@ public class GamePanel extends JPanel {
 
     private void makeMove(int direction) {
         for (int j = 0; j < shape.length; j++) {
-            shape[j].getIndex()[1] = shape[j].getIndex()[1] + direction;
+            shape[j].getIndex()[Constants.COLUMN_INDEX] += direction;
         }
     }
 
     private void spawn() {
         for(Block block : this.shape) {
-            if (allPanels[block.getIndex()[0]][block.getIndex()[1]].getCurrentBlock() != null) {
+            if (allPanels[block.getIndex()[Constants.ROW_INDEX]][block.getIndex()[Constants.COLUMN_INDEX]].getCurrentBlock() != null) {
                 this.isGameOver = true;
                 //this.removeAll();
                 //this.setBackground(Color.lightGray);
@@ -217,11 +277,11 @@ public class GamePanel extends JPanel {
                         allPanels[i][j].setBackground(Color.WHITE);
                         allPanels[i][j].removeAll();
                         try {
-                            Thread.sleep(20);
+                            Thread.sleep(50);
                         } catch (InterruptedException e) {
                             throw new RuntimeException(e);
                         }
-                        allPanels[i][j].setBackground(new Color(4, 20, 30));
+                        allPanels[i][j].setBackground(Constants.PANEL_BACKGROUND_COLOR);
                     }
                 }
                 //this.repaint();
@@ -281,48 +341,19 @@ public class GamePanel extends JPanel {
 //                }else{
 //                    allPanels[i][j].setBackground(new Color(0,99,0));
 //                }
+//                }
             }
         }
     }
 
-    private void dropDown() {
-        new Thread(() -> {
-            synchronized (lock) {
-                while (!isGameOver) {
-                        try {
-                            this.playSound(Constants.DROP_SOUND_EFFECT);
-                            Thread.sleep(this.dropSpeed);
-                            this.updatePosition(this.shape, true);
-                            if (this.checkIfClearToMoveDown(this.shape)) {
-                                this.moveDown(this.shape);
-                                this.updatePosition(this.shape, false);
-                            } else {
-                                this.playSound(Constants.LAND_SOUND_EFFECT);
-                                this.updatePosition(this.shape, false);
-                                this.breakLines();
-                                lock.notify();
-                                try {
-                                    lock.wait();
-                                } catch (InterruptedException e) {
-                                    throw new RuntimeException(e);
-                                }
-                            }
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                }
-                lock.notify();
-            }
-        }).start();
-    }
 
     private void breakLines() {
         boolean isFull;
-        for (int i = 0; i < 20; i++) {
+        for (int i = 0; i < Constants.ROWS_COUNT; i++) {
             isFull = false;
-            for (int j = 0; j < 10; j++) {
+            for (int j = 0; j < Constants.COLUMNS_COUNT; j++) {
                 if (allPanels[i][j].getCurrentBlock() != null) {
-                    if (j + 1 == 10) {
+                    if (j + 1 == Constants.COLUMNS_COUNT) {
                         isFull = true;
                     }
                 }else {
@@ -332,25 +363,21 @@ public class GamePanel extends JPanel {
 
             if (isFull) {
                 this.playSound(Constants.LINE_BREAK_SOUND_EFFECT);
-                for (int k = 0; k < 10; k++) {  //This is removing the full line
+                for (int k = 0; k < Constants.COLUMNS_COUNT; k++) {  //This is removing the full line
                     this.allPanels[i][k].removeAll();
                     this.allPanels[i][k].setCurrentBlock(null);
                     allPanels[i][k].setBackground(Color.WHITE);
                 }
-                try {
-                    Thread.sleep(100);
-                }catch (Exception e){
-                    e.printStackTrace();
-                }
+                this.sleepFor(Constants.REMOVE_ANIMATION_DELAY);
                 //this.repaint();
                 for (int l = i; l >= 0; l--) { //this is updating blocks that are above the full line
-                    for (int k = 0; k < 10; k++) {
+                    for (int k = 0; k < Constants.COLUMNS_COUNT; k++) {
                         if(l == i){
-                            allPanels[i][k].setBackground(new Color(4, 20, 30));
+                            allPanels[i][k].setBackground(Constants.PANEL_BACKGROUND_COLOR);
                         }else {
                             allPanels[l][k].removeAll();
                             if (allPanels[l][k].getCurrentBlock() != null) {
-                                allPanels[l][k].getCurrentBlock().setRow(this.allPanels[l][k].getCurrentBlock().getIndex()[0] + 1);
+                                allPanels[l][k].getCurrentBlock().setRow(this.allPanels[l][k].getCurrentBlock().getIndex()[Constants.ROW_INDEX] + 1);
                                 allPanels[l + 1][k].add(allPanels[l][k].getCurrentBlock());
                                 allPanels[l + 1][k].setCurrentBlock(allPanels[l][k].getCurrentBlock());
                                 allPanels[l][k].setCurrentBlock(null);
@@ -367,8 +394,9 @@ public class GamePanel extends JPanel {
     private boolean checkIfClearToMoveDown(Block[] shape){
         boolean res = true;
 
+
         for (Block block : shape){
-            if(block.getIndex()[0] >= 19 || allPanels[block.getIndex()[0] + 1][block.getIndex()[1]].getCurrentBlock() != null){
+            if(block.getIndex()[Constants.ROW_INDEX] >= Constants.ROWS_COUNT-1 || allPanels[block.getIndex()[Constants.ROW_INDEX] + 1][block.getIndex()[Constants.COLUMN_INDEX]].getCurrentBlock() != null){
                 res = false;
                 break;
             }
@@ -378,19 +406,18 @@ public class GamePanel extends JPanel {
 
     private void moveDown(Block[] shape) {
         for (Block block : shape) {
-            block.getIndex()[0]++;
+            block.getIndex()[Constants.ROW_INDEX]++;
         }
     }
 
     private void updatePosition(Block[] shape, boolean toRemove) {
             for (Block block : shape) {
                 if(toRemove) {
-                    this.allPanels[block.getIndex()[0]][block.getIndex()[1]].remove(block);
-                    this.allPanels[block.getIndex()[0]][block.getIndex()[1]].setCurrentBlock(null);
+                    this.allPanels[block.getIndex()[Constants.ROW_INDEX]][block.getIndex()[Constants.COLUMN_INDEX]].remove(block);
+                    this.allPanels[block.getIndex()[Constants.ROW_INDEX]][block.getIndex()[Constants.COLUMN_INDEX]].setCurrentBlock(null);
                 }else{
-                    //this.allPanels[block.getIndex()[0]][block.getIndex()[1]].removeAll();
-                    this.allPanels[block.getIndex()[0]][block.getIndex()[1]].add(block);
-                    this.allPanels[block.getIndex()[0]][block.getIndex()[1]].setCurrentBlock(block);
+                    this.allPanels[block.getIndex()[Constants.ROW_INDEX]][block.getIndex()[Constants.COLUMN_INDEX]].add(block);
+                    this.allPanels[block.getIndex()[Constants.ROW_INDEX]][block.getIndex()[Constants.COLUMN_INDEX]].setCurrentBlock(block);
                 }
             }
             this.repaint();

@@ -9,8 +9,9 @@ public class Window extends JFrame {
         this.setLayout(null);
         this.setTitle("Tetris");
         this.setSize(Constants.WINDOW_WIDTH,Constants.WINDOW_HEIGHT);
+        this.setLocationRelativeTo(null);
         this.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        this.getContentPane().setBackground(new Color(34, 34, 34));
+        this.getContentPane().setBackground(Constants.MAIN_BACKGROUND_COLOR);
         nextShapePanel = new NextShapePanel();
         GAME_PANEL = new GamePanel();
         this.add(nextShapePanel);
