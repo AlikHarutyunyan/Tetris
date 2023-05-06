@@ -1,15 +1,30 @@
 import java.awt.*;
 
 public class Constants {
-    public static final int WINDOW_WIDTH = 680;
-    public static final int WINDOW_HEIGHT = 750;
+    public static final int WINDOW_WIDTH = 650;
+    public static final int WINDOW_HEIGHT = 700;
     public static final int MARGIN_TOP = 10;
+    public static final int NEXT_PANEL_MARGIN_TOP = 50;
+    public static final int NEXT_PANEL_WIDTH = 240;
+    public static final int NEXT_SHAPE_LABEL_HORIZONTAL_SIZE = 40;
+    public static final int NEXT_SHAPE_LABEL_VERTICAL_SIZE = 6;
+    public static final int NEXT_SHAPE_LABEL_PADDING = 10;
+    public static final int NEXT_SHAPE_LABEL_HEIGHT = 45;
+    public static final int FONT_SIZE = 22;
+    public static final int NEXT_PANEL_HEIGHT = 80;
     public static final int GAME_PANEL_HEIGHT = 600;
     public static final int GAME_PANEL_WIDTH = 300;
+    public static final int MARGIN_LEFT = 10;
+    public static final int GAME_OVER_ANIMATION_DELAY = 40;
+    public static final Object[] GAME_OVER_OPTIONS = {"New Game", "Quit Game"};
+    public static final int QUIT_GAME_OPTION = 1;
+    public static final int NEW_GAME_OPTION = 0;
+    public static final int NEXT_SHAPE_PANEL_X = GAME_PANEL_WIDTH + 50;
     public static final int ROWS_COUNT = 20;
     public static final int NEXT_SHAPE_PANEL_ROWS_COUNT = 3;
     public static final int COLUMNS_COUNT = 10;
     public static final int REGULAR_DROP_SPEED = 1000;
+    public static final int NEW_GAME_START_DELAY = 1000;
     public static final int FAST_DROP_SPEED = 100;
     public static final int LEFT_DIRECTION = -1;
     public static final int RIGHT_DIRECTION = 1;

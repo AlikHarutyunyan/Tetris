@@ -2,10 +2,11 @@ import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.io.File;
+import java.io.*;
 import java.util.Arrays;
 import java.util.Random;
 
@@ -28,7 +29,7 @@ public class GamePanel extends JPanel {
 
     public GamePanel() {
         this.allPanels = new CellPanel[Constants.ROWS_COUNT][Constants.COLUMNS_COUNT];
-        this.setBounds(0, 0, Constants.GAME_PANEL_WIDTH, Constants.GAME_PANEL_HEIGHT);
+        this.setBounds(Constants.MARGIN_LEFT, Constants.MARGIN_TOP, Constants.GAME_PANEL_WIDTH, Constants.GAME_PANEL_HEIGHT);
         this.setLayout(new GridLayout(Constants.ROWS_COUNT, Constants.COLUMNS_COUNT));
         this.setFocusable(true);
         this.requestFocusInWindow();
@@ -36,6 +37,7 @@ public class GamePanel extends JPanel {
         this.dropSpeed = Constants.REGULAR_DROP_SPEED;
         this.startGame();
         this.addControls();
+
 
     }
 
@@ -133,6 +135,8 @@ public class GamePanel extends JPanel {
                         dropSpeed = Constants.REGULAR_DROP_SPEED;
                     }else if(e.getKeyCode() == KeyEvent.VK_ESCAPE){
                         isPaused = !isPaused;
+                        Window.pausePanel.setVisible(isPaused);
+
                     }else {
                         if (!isPaused) {
                             while (!keyCanBePressed) {
@@ -194,7 +198,6 @@ public class GamePanel extends JPanel {
                 block.setDistanceFromCenter(distancesFromCenter[i][Constants.ROW_INDEX], distancesFromCenter[i][Constants.COLUMN_INDEX]);
                 block.getIndex()[Constants.ROW_INDEX] = indexesInGrid[i][Constants.ROW_INDEX];
                 block.getIndex()[Constants.COLUMN_INDEX] = indexesInGrid[i][Constants.COLUMN_INDEX];
-                System.out.println(Arrays.toString(block.getIndex()));
                 i++;
             }
         }
@@ -225,7 +228,6 @@ public class GamePanel extends JPanel {
                 i++;
                 if (i == this.shape.length) {
                     canRotate = true;
-
                 }
             }
         }
@@ -258,44 +260,67 @@ public class GamePanel extends JPanel {
     }
 
     private void spawn() {
+        String title = "GAME OVER!";
+        this.keyIsPressed = true;
         for(Block block : this.shape) {
             if (allPanels[block.getIndex()[Constants.ROW_INDEX]][block.getIndex()[Constants.COLUMN_INDEX]].getCurrentBlock() != null) {
                 this.isGameOver = true;
-                //this.removeAll();
-                //this.setBackground(Color.lightGray);
-                // this.repaint();
                 this.playSound(Constants.GAME_OVER_SOUND_EFFECT);
-                System.out.println("Game over");
+                boolean isHighScoreUpdated = this.updateHighScore();
+                if(isHighScoreUpdated){
+                    title += " NEW HIGH-SCORE!";
+                }
                 break;
             }
         }
-            if(isGameOver){ // Start new game, later I will write a separate function for this with
-                this.playSound(Constants.CLEAN_UP_SOUND_EFFECT);
-                for (int i = 0; i < allPanels.length; i++) {
-                    for (int j = 0; j < allPanels[i].length; j++) {
-                        allPanels[i][j].setCurrentBlock(null);
-                        allPanels[i][j].setBackground(Color.WHITE);
-                        allPanels[i][j].removeAll();
-                        try {
-                            Thread.sleep(50);
-                        } catch (InterruptedException e) {
-                            throw new RuntimeException(e);
-                        }
-                        allPanels[i][j].setBackground(Constants.PANEL_BACKGROUND_COLOR);
-                    }
+        this.keyIsPressed = false;
+            if(isGameOver){
+                this.playGameOverAnimation();
+                int choice =  this.showGameOverMessageChoice(title);
+                if(choice == Constants.QUIT_GAME_OPTION){
+                    System.exit(0);
                 }
-                //this.repaint();
-                try {
-                    Thread.sleep(1000);
-                    System.out.println("Starting...");
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
+                this.sleepFor(Constants.NEW_GAME_START_DELAY);
+                Window.scorePanel.clearScore();
+                this.dropSpeed = Constants.REGULAR_DROP_SPEED;
                 this.isGameOver = false;
             }
         this.updatePosition(this.shape, false);
+        }
 
+        private void playGameOverAnimation(){
+            this.playSound(Constants.CLEAN_UP_SOUND_EFFECT);
+            for (CellPanel[] allPanel : allPanels) {
+                for (CellPanel cellPanel : allPanel) {
+                    cellPanel.setCurrentBlock(null);
+                    cellPanel.setBackground(Color.WHITE);
+                    cellPanel.removeAll();
+                    this.sleepFor(Constants.GAME_OVER_ANIMATION_DELAY);
+                    cellPanel.setBackground(Constants.PANEL_BACKGROUND_COLOR);
+                }
+            }
+            this.repaint();
+        }
 
+        private int showGameOverMessageChoice(String title){
+
+            UIManager.put("OptionPane.background", Constants.PANEL_BACKGROUND_COLOR);
+            UIManager.put("Panel.background", Constants.PANEL_BACKGROUND_COLOR);
+            UIManager.put("OptionPane.messageForeground", Color.WHITE);
+            UIManager.put("OptionPane.border", BorderFactory.createLineBorder(Color.WHITE, 2));
+            UIManager.put("Button.background", Color.BLACK);
+            UIManager.put("Button.foreground", Color.WHITE);
+            UIManager.put("Button.focus", new Color(0, 0, 0, 0));
+
+            return JOptionPane.showOptionDialog(
+                    this,
+                    " Choose an option:",
+                    title,
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.PLAIN_MESSAGE,
+                    null,
+                    Constants.GAME_OVER_OPTIONS,
+                    Constants.GAME_OVER_OPTIONS[Constants.NEW_GAME_OPTION]);
         }
 
 
@@ -317,6 +342,41 @@ public class GamePanel extends JPanel {
 
     }
 
+    private boolean updateHighScore(){
+        boolean isUpdated = false;
+        File highScoreFile = new File("files/highScore.txt");
+        FileWriter writer;
+
+        if(!highScoreFile.exists()){
+            try {
+                boolean res = highScoreFile.createNewFile();
+                 writer = new FileWriter(highScoreFile);
+                if(res){
+                    writer.write("0");
+                }
+                writer.close();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader(highScoreFile));
+            int highScore = Integer.parseInt(reader.readLine().trim());
+            int currentScore = Window.scorePanel.getScore();
+            if(highScore < currentScore){
+                writer = new FileWriter(highScoreFile);
+                writer.write(currentScore+"");
+                writer.close();
+                Window.scorePanel.updateHighScore(currentScore);
+                isUpdated = true;
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        return isUpdated;
+    }
+
     private Block[] deepCopy(Block[] arr){
         Block[] shape = new Block[arr.length];
         for (int i = 0; i < arr.length; i++) {
@@ -335,6 +395,7 @@ public class GamePanel extends JPanel {
         for (int i = 0; i < allPanels.length; i++) {
             for (int j = 0; j < allPanels[i].length; j++) {
                 allPanels[i][j] = new CellPanel();
+                allPanels[i][j].setBorder(BorderFactory.createEtchedBorder());
                 this.add(allPanels[i][j]);
 //                if((i+j) % 2 == 0){
 //                    allPanels[i][j].setBackground(new Color(0,0,99));
@@ -369,6 +430,7 @@ public class GamePanel extends JPanel {
                     allPanels[i][k].setBackground(Color.WHITE);
                 }
                 this.sleepFor(Constants.REMOVE_ANIMATION_DELAY);
+                Window.scorePanel.updateScore(100);
                 //this.repaint();
                 for (int l = i; l >= 0; l--) { //this is updating blocks that are above the full line
                     for (int k = 0; k < Constants.COLUMNS_COUNT; k++) {
@@ -407,6 +469,9 @@ public class GamePanel extends JPanel {
     private void moveDown(Block[] shape) {
         for (Block block : shape) {
             block.getIndex()[Constants.ROW_INDEX]++;
+        }
+        if(this.dropSpeed == Constants.FAST_DROP_SPEED) {
+            Window.scorePanel.updateScore(1);
         }
     }
 

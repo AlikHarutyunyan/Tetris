@@ -4,11 +4,13 @@ import java.awt.*;
 public class NextShapePanel extends JPanel {
     private JPanel[][] allPanels;
     public NextShapePanel(){
+
         this.setLayout(new GridLayout(Constants.NEXT_SHAPE_PANEL_ROWS_COUNT,Constants.COLUMNS_COUNT));
-        this.setBounds(Constants.GAME_PANEL_WIDTH + 50, Constants.MARGIN_TOP,240,80);
+        this.setBounds(Constants.NEXT_SHAPE_PANEL_X, Constants.NEXT_PANEL_MARGIN_TOP,Constants.NEXT_PANEL_WIDTH,Constants.NEXT_PANEL_HEIGHT);
        // this.setOpaque(false);
 
        this.setBackground(Constants.PANEL_BACKGROUND_COLOR);
+        setBorder(BorderFactory.createLineBorder(Color.WHITE,6));
         this.allPanels = new JPanel[Constants.NEXT_SHAPE_PANEL_ROWS_COUNT][Constants.COLUMNS_COUNT];
 
         for (int i = 0; i < allPanels.length; i++) {
