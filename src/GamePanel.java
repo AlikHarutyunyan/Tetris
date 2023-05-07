@@ -2,12 +2,10 @@ import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
 import javax.swing.*;
-import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.*;
-import java.util.Arrays;
 import java.util.Random;
 
 public class GamePanel extends JPanel {
@@ -144,23 +142,20 @@ public class GamePanel extends JPanel {
                             }
                             if (e.getKeyCode() == KeyEvent.VK_LEFT || e.getKeyCode() == KeyEvent.VK_RIGHT) {
                                 keyIsPressed = true;
-
                                 playSound(Constants.MOVE_SOUND_EFFECT);
-                                boolean success;
-                                int direction;
+
+                                int direction = Constants.RIGHT_DIRECTION;
                                 if (e.getKeyCode() == KeyEvent.VK_LEFT) {
                                     direction = Constants.LEFT_DIRECTION;
-                                } else {
-                                    direction = Constants.RIGHT_DIRECTION;
                                 }
-                                updatePosition(shape, true);
-                                success = checkIfClearToMoveHorizontally(shape, direction);
 
-                                if (success) {
+                                updatePosition(shape, true);
+                                if (checkIfClearToMoveHorizontally(shape, direction)) {
                                     makeMove(direction);
                                 }
                                 updatePosition(shape, false);
                                 keyIsPressed = false;
+
                             } else if (e.getKeyCode() == KeyEvent.VK_UP) {
                                 keyIsPressed = true;
                                 rotate();
@@ -187,8 +182,9 @@ public class GamePanel extends JPanel {
     }
 
     private void rotate() {
-        int[][] distancesFromCenter = new int[this.shape.length][2];
-        int[][] indexesInGrid = new int[this.shape.length][2];
+        final int rowAndColumn = 2;
+        int[][] distancesFromCenter = new int[this.shape.length][rowAndColumn];
+        int[][] indexesInGrid = new int[this.shape.length][rowAndColumn];
         int i = 0;
 
         this.updatePosition(this.shape, true);
@@ -254,8 +250,8 @@ public class GamePanel extends JPanel {
     }
 
     private void makeMove(int direction) {
-        for (int j = 0; j < shape.length; j++) {
-            shape[j].getIndex()[Constants.COLUMN_INDEX] += direction;
+        for (Block block : shape) {
+            block.getIndex()[Constants.COLUMN_INDEX] += direction;
         }
     }
 
@@ -307,7 +303,7 @@ public class GamePanel extends JPanel {
             UIManager.put("OptionPane.background", Constants.PANEL_BACKGROUND_COLOR);
             UIManager.put("Panel.background", Constants.PANEL_BACKGROUND_COLOR);
             UIManager.put("OptionPane.messageForeground", Color.WHITE);
-            UIManager.put("OptionPane.border", BorderFactory.createLineBorder(Color.WHITE, 2));
+            UIManager.put("OptionPane.border", BorderFactory.createLineBorder(Color.WHITE, Constants.GAME_OVER_BUTTON_BORDER_SIZE));
             UIManager.put("Button.background", Color.BLACK);
             UIManager.put("Button.foreground", Color.WHITE);
             UIManager.put("Button.focus", new Color(0, 0, 0, 0));
@@ -327,7 +323,7 @@ public class GamePanel extends JPanel {
     private void createShape() {
         Random random = new Random();
             this.shape = deepCopy(this.nextShape);
-            this.shapeColor = random.nextInt(0, Constants.BLOCK_COLORS.length);
+            this.shapeColor = random.nextInt(Constants.BLOCK_COLORS.length);
             this.nextShape = deepCopy(Constants.SHAPES[random.nextInt(Constants.SHAPES.length)]);
 
 
@@ -338,13 +334,11 @@ public class GamePanel extends JPanel {
             }
         }
         Window.nextShapePanel.addShape(this.nextShape);
-        //Window.nextShapePanel.;
-
     }
 
     private boolean updateHighScore(){
         boolean isUpdated = false;
-        File highScoreFile = new File("files/highScore.txt");
+        File highScoreFile = new File("Files/highScore.txt");
         FileWriter writer;
 
         if(!highScoreFile.exists()){
@@ -387,7 +381,7 @@ public class GamePanel extends JPanel {
 
     private void generateDistanceFromCenter(int[] index) {
         for (Block block : this.shape) {
-            block.calculateDistanceFromCenter(index[0], index[1]);
+            block.calculateDistanceFromCenter(index[Constants.ROW_INDEX], index[Constants.COLUMN_INDEX]);
         }
     }
 
@@ -397,57 +391,61 @@ public class GamePanel extends JPanel {
                 allPanels[i][j] = new CellPanel();
                 allPanels[i][j].setBorder(BorderFactory.createEtchedBorder());
                 this.add(allPanels[i][j]);
-//                if((i+j) % 2 == 0){
-//                    allPanels[i][j].setBackground(new Color(0,0,99));
-//                }else{
-//                    allPanels[i][j].setBackground(new Color(0,99,0));
-//                }
-//                }
             }
         }
     }
 
 
     private void breakLines() {
-        boolean isFull;
         for (int i = 0; i < Constants.ROWS_COUNT; i++) {
-            isFull = false;
-            for (int j = 0; j < Constants.COLUMNS_COUNT; j++) {
-                if (allPanels[i][j].getCurrentBlock() != null) {
-                    if (j + 1 == Constants.COLUMNS_COUNT) {
-                        isFull = true;
-                    }
-                }else {
-                    break;
-                }
-            }
-
-            if (isFull) {
+            if (this.lineIsFull(i)) {
                 this.playSound(Constants.LINE_BREAK_SOUND_EFFECT);
-                for (int k = 0; k < Constants.COLUMNS_COUNT; k++) {  //This is removing the full line
-                    this.allPanels[i][k].removeAll();
-                    this.allPanels[i][k].setCurrentBlock(null);
-                    allPanels[i][k].setBackground(Color.WHITE);
-                }
+                this.removeLine(i);
                 this.sleepFor(Constants.REMOVE_ANIMATION_DELAY);
-                Window.scorePanel.updateScore(100);
-                //this.repaint();
-                for (int l = i; l >= 0; l--) { //this is updating blocks that are above the full line
-                    for (int k = 0; k < Constants.COLUMNS_COUNT; k++) {
-                        if(l == i){
-                            allPanels[i][k].setBackground(Constants.PANEL_BACKGROUND_COLOR);
-                        }else {
-                            allPanels[l][k].removeAll();
-                            if (allPanels[l][k].getCurrentBlock() != null) {
-                                allPanels[l][k].getCurrentBlock().setRow(this.allPanels[l][k].getCurrentBlock().getIndex()[Constants.ROW_INDEX] + 1);
-                                allPanels[l + 1][k].add(allPanels[l][k].getCurrentBlock());
-                                allPanels[l + 1][k].setCurrentBlock(allPanels[l][k].getCurrentBlock());
-                                allPanels[l][k].setCurrentBlock(null);
-                            }
-                        }
+                Window.scorePanel.updateScore(Constants.LINE_BREAK_SCORE_BONUS);
+                this.dropLines(i);
+                this.repaint();
+            }
+        }
+    }
+
+    private boolean lineIsFull(int i){
+        boolean isFull = false;
+        for (int j = 0; j < Constants.COLUMNS_COUNT; j++) {
+            if (allPanels[i][j].getCurrentBlock() != null) {
+                if (j + 1 == Constants.COLUMNS_COUNT) {
+                    isFull = true;
+                }
+            }else {
+                break;
+            }
+        }
+
+        return isFull;
+    }
+
+    private void removeLine(int i){
+        for (int k = 0; k < Constants.COLUMNS_COUNT; k++) {
+            this.allPanels[i][k].removeAll();
+            this.allPanels[i][k].setCurrentBlock(null);
+            allPanels[i][k].setBackground(Color.WHITE);
+        }
+    }
+
+    private void dropLines(int i){
+        for (int l = i; l >= 0; l--) {
+            for (int k = 0; k < Constants.COLUMNS_COUNT; k++) {
+                if(l == i){
+                    allPanels[i][k].setBackground(Constants.PANEL_BACKGROUND_COLOR);
+                }else {
+                    allPanels[l][k].removeAll();
+                    if (allPanels[l][k].getCurrentBlock() != null) {
+                        allPanels[l][k].getCurrentBlock().setRow(this.allPanels[l][k].getCurrentBlock().getIndex()[Constants.ROW_INDEX] + 1);
+                        allPanels[l + 1][k].add(allPanels[l][k].getCurrentBlock());
+                        allPanels[l + 1][k].setCurrentBlock(allPanels[l][k].getCurrentBlock());
+                        allPanels[l][k].setCurrentBlock(null);
                     }
                 }
-                this.repaint();
             }
         }
     }
@@ -455,7 +453,6 @@ public class GamePanel extends JPanel {
 
     private boolean checkIfClearToMoveDown(Block[] shape){
         boolean res = true;
-
 
         for (Block block : shape){
             if(block.getIndex()[Constants.ROW_INDEX] >= Constants.ROWS_COUNT-1 || allPanels[block.getIndex()[Constants.ROW_INDEX] + 1][block.getIndex()[Constants.COLUMN_INDEX]].getCurrentBlock() != null){
@@ -471,7 +468,7 @@ public class GamePanel extends JPanel {
             block.getIndex()[Constants.ROW_INDEX]++;
         }
         if(this.dropSpeed == Constants.FAST_DROP_SPEED) {
-            Window.scorePanel.updateScore(1);
+            Window.scorePanel.updateScore(Constants.FAST_SPEED_SCORE_BONUS);
         }
     }
 

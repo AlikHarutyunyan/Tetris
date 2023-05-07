@@ -2,18 +2,17 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 
 public class ScorePanel extends JPanel {
     private JLabel scoreCountLabel;
-    private  JLabel highScoreCountLabel;
+    private JLabel highScoreCountLabel;
 
     public ScorePanel(){
-        this.setBounds(Constants.NEXT_SHAPE_PANEL_X,Constants.NEXT_PANEL_MARGIN_TOP+Constants.NEXT_PANEL_HEIGHT+Constants.MARGIN_TOP,Constants.NEXT_PANEL_WIDTH,300);
-        this.setBorder(BorderFactory.createLineBorder(Color.WHITE,6));
+        this.setBounds(Constants.NEXT_SHAPE_PANEL_X,Constants.NEXT_PANEL_MARGIN_TOP+Constants.NEXT_PANEL_HEIGHT+Constants.MARGIN_TOP,Constants.NEXT_PANEL_WIDTH,Constants.SCORE_PANEL_HEIGHT);
+        this.setBorder(BorderFactory.createLineBorder(Color.WHITE,Constants.SCORE_PANEL_BORDER_SIZE));
         this.setBackground(Constants.PANEL_BACKGROUND_COLOR);
-        this.setLayout(new GridLayout(4,1));
+        this.setLayout(new GridLayout(Constants.SCORE_PANEL_ROWS_COUNT,Constants.SCORE_PANEL_COLUMN_COUNT));
 
         JLabel scoreLabel = new JLabel("SCORE");
 
@@ -35,10 +34,10 @@ public class ScorePanel extends JPanel {
 
         addJLabel(scoreLabel);
         addJLabel(scoreCountLabel);
-        scoreCountLabel.setBorder(BorderFactory.createLineBorder(Color.white,1));
+        scoreCountLabel.setBorder(BorderFactory.createLineBorder(Color.white,Constants.SCORE_PANEL_LINE_BORDER_SIZE));
         addJLabel(highScoreLabel);
         addJLabel(highScoreCountLabel);
-        highScoreCountLabel.setBorder(BorderFactory.createLineBorder(Color.white,1));
+        highScoreCountLabel.setBorder(BorderFactory.createLineBorder(Color.white,Constants.SCORE_PANEL_LINE_BORDER_SIZE));
     }
 
     public void updateScore(int quantity){
@@ -68,7 +67,7 @@ public class ScorePanel extends JPanel {
         Font font = this.getFont();
         label.setHorizontalAlignment(SwingConstants.CENTER);
         label.setForeground(Color.white);
-        label.setFont(new Font(font.getName(),font.getStyle(),22));
+        label.setFont(new Font(font.getName(),font.getStyle(),Constants.SCORE_TEXT_SIZE));
         this.add(label);
     }
 

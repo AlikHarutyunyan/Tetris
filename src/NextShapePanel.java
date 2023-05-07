@@ -7,10 +7,9 @@ public class NextShapePanel extends JPanel {
 
         this.setLayout(new GridLayout(Constants.NEXT_SHAPE_PANEL_ROWS_COUNT,Constants.COLUMNS_COUNT));
         this.setBounds(Constants.NEXT_SHAPE_PANEL_X, Constants.NEXT_PANEL_MARGIN_TOP,Constants.NEXT_PANEL_WIDTH,Constants.NEXT_PANEL_HEIGHT);
-       // this.setOpaque(false);
 
-       this.setBackground(Constants.PANEL_BACKGROUND_COLOR);
-        setBorder(BorderFactory.createLineBorder(Color.WHITE,6));
+        this.setBackground(Constants.PANEL_BACKGROUND_COLOR);
+        this.setBorder(BorderFactory.createLineBorder(Color.WHITE,Constants.NEXT_SHAPE_PANEL_BORDER_SIZE));
         this.allPanels = new JPanel[Constants.NEXT_SHAPE_PANEL_ROWS_COUNT][Constants.COLUMNS_COUNT];
 
         for (int i = 0; i < allPanels.length; i++) {
@@ -18,12 +17,6 @@ public class NextShapePanel extends JPanel {
                 allPanels[i][j] = new JPanel();
                 allPanels[i][j].setLayout(null);
                 allPanels[i][j].setOpaque(false);
-//                if((i+j) % 2 == 0){
-//                    allPanels[i][j].setBackground(Color.GREEN);
-//                }else{
-//                    allPanels[i][j].setBackground(Color.RED);
-//                }
-                //allPanels[i][j].setBackground(Color.BLUE);
                 this.add(allPanels[i][j]);
             }
         }
@@ -38,9 +31,9 @@ public class NextShapePanel extends JPanel {
     }
 
     public void removeShape(){
-        for (int i = 0; i < allPanels.length; i++) {
-            for (int j = 0; j < allPanels[i].length; j++) {
-                allPanels[i][j].removeAll();
+        for (JPanel[] allPanel : allPanels) {
+            for (JPanel jPanel : allPanel) {
+                jPanel.removeAll();
             }
         }
         this.repaint();

@@ -2,10 +2,8 @@ import javax.swing.*;
 import java.awt.*;
 
 public class Window extends JFrame {
-    private final GamePanel GAME_PANEL;
     public static NextShapePanel nextShapePanel;
     public static ScorePanel scorePanel;
-
     public static PausePanel pausePanel;
 
     public Window(){
@@ -16,9 +14,6 @@ public class Window extends JFrame {
         this.setLocationRelativeTo(null);
         this.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         this.getContentPane().setBackground(Constants.MAIN_BACKGROUND_COLOR);
-
-
-
 
         nextShapePanel = new NextShapePanel();
         JLabel nextShapeLabel = new JLabel("NEXT SHAPE:");
@@ -33,23 +28,21 @@ public class Window extends JFrame {
         nextShapeLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
         pausePanel = new PausePanel();
-        this.add(pausePanel);
 
+        this.add(pausePanel);
         this.add(nextShapeLabel);
         this.add(nextShapePanel);
 
         scorePanel = new ScorePanel();
         this.add(scorePanel);
 
-        GAME_PANEL = new GamePanel();
+        GamePanel GAME_PANEL = new GamePanel();
         this.add(GAME_PANEL);
 
-        JLabel backgroundLabel = new JLabel(new ImageIcon("images/background.jpg"));
+        JLabel backgroundLabel = new JLabel(new ImageIcon("Images/background.jpg"));
 
-        // Set the size and position of the label using setBounds(x, y, width, height)
         backgroundLabel.setBounds(0, 0, Constants.WINDOW_WIDTH, Constants.WINDOW_HEIGHT);
 
-        // Add the label to the content pane
         this.getContentPane().add(backgroundLabel);
 
         this.setVisible(true);

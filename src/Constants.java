@@ -22,6 +22,7 @@ public class Constants {
     public static final int NEXT_SHAPE_PANEL_X = GAME_PANEL_WIDTH + 50;
     public static final int ROWS_COUNT = 20;
     public static final int NEXT_SHAPE_PANEL_ROWS_COUNT = 3;
+    public static final int NEXT_SHAPE_PANEL_BORDER_SIZE = 6;
     public static final int COLUMNS_COUNT = 10;
     public static final int REGULAR_DROP_SPEED = 1000;
     public static final int NEW_GAME_START_DELAY = 1000;
@@ -32,6 +33,23 @@ public class Constants {
     public static final int COLUMN_INDEX = 1;
     public static final int REMOVE_ANIMATION_DELAY = 100;
     public static final int BLOCK_SIZE = 30;
+    public static final int PAUSE_PANEL_SIZE = 1;
+    public static final int PAUSE_TEXT_SIZE = 30;
+    public static final int SCORE_TEXT_SIZE = 22;
+    public static final int SCORE_PANEL_ROWS_COUNT = 4;
+    public static final int SCORE_PANEL_COLUMN_COUNT = 1;
+    public static final int SCORE_PANEL_BORDER_SIZE = 6;
+    public static final int SCORE_PANEL_LINE_BORDER_SIZE = 1;
+    public static final int SCORE_PANEL_HEIGHT = 300;
+
+    public static final int MENU_BUTTON_WIDTH = 400;
+    public static final int MENU_BUTTON_HEIGHT = 150;
+    public static final int MENU_BUTTON_FONT_SIZE = 40;
+    public static final int HOW_TO_PLAY_WINDOW_WIDTH = 500;
+    public static final int HOW_TO_PLAY_WINDOW_HEIGHT = 360;
+    public static final int FAST_SPEED_SCORE_BONUS = 1;
+    public static final int LINE_BREAK_SCORE_BONUS = 100;
+    public static final int GAME_OVER_BUTTON_BORDER_SIZE = 2;
     public static final int[] CLOCK_WISE_ROTATION_MATRIX = {0, 1,
                                                            -1, 0};
 
@@ -83,19 +101,19 @@ public class Constants {
                     new Block(0, 6,  false),
             },
             new Block[]{
-                    new Block(0, 5,  true),
+                    new Block(0, 5,  false),
                     new Block(0, 6,  false),
                     new Block(1, 5,  true),
                     new Block(1, 4,  false),
             },
             new Block[]{
-                    new Block(0, 5,  true),
+                    new Block(0, 5,  false),
                     new Block(0, 4,  false),
                     new Block(1, 5,  true),
                     new Block(1, 6,  false),
             },
             new Block[]{
-                    new Block(0, 5,  true),
+                    new Block(0, 5,  false),
                     new Block(1, 4,  false),
                     new Block(1, 5,  true),
                     new Block(1, 6,  false),

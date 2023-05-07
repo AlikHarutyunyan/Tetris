@@ -15,12 +15,10 @@ public class Block extends JPanel {
         this.isCenter = isCenter;
     }
     public Block(Block other, Color color) {
-       // this.setBorder(BorderFactory.createEmptyBorder());
 
         this.setBounds(0,0,Constants.BLOCK_SIZE,Constants.BLOCK_SIZE);
         this.color = color;
         this.setOpaque(false);
-        //this.setBackground(this.color);
         this.isCenter = other.isCenter;
 
         this.index = new int[other.index.length];
@@ -57,8 +55,6 @@ public class Block extends JPanel {
     public int[] multiplyRotationMatrix(int[] rotationMatrix) {
         int newRowDistance = rotationMatrix[0] * this.distanceFromCenter[Constants.ROW_INDEX] + rotationMatrix[1] * this.distanceFromCenter[Constants.COLUMN_INDEX];
         int newColumnDistance = rotationMatrix[2] * this.distanceFromCenter[Constants.ROW_INDEX] + rotationMatrix[3] * this.distanceFromCenter[Constants.COLUMN_INDEX];
-        //this.distanceFromCenter[0] = newRowDistance;
-        //this.distanceFromCenter[1] = newColumnDistance;
         return new int[]{newRowDistance,newColumnDistance};
     }
 
