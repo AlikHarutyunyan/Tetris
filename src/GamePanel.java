@@ -10,7 +10,7 @@ import java.util.Random;
 
 public class GamePanel extends JPanel {
 
-    private static final Object lock = new Object();
+    private static final Object MY_LOCK = new Object();
     private CellPanel[][] allPanels;
     private Block[] shape;
 
@@ -46,13 +46,13 @@ public class GamePanel extends JPanel {
         new Thread( () -> {
             this.startTurn();
             this.dropDown();
-            synchronized (lock){
+            synchronized (MY_LOCK){
                 while(!isGameOver) {
                     if (!isPaused) {
                         try {
-                            lock.wait();
+                            MY_LOCK.wait();
                             this.startTurn();
-                            lock.notify();
+                            MY_LOCK.notify();
                         } catch (InterruptedException e) {
                             throw new RuntimeException(e);
                         }
@@ -64,7 +64,7 @@ public class GamePanel extends JPanel {
 
     private void dropDown() {
         new Thread(() -> {
-            synchronized (lock) {
+            synchronized (MY_LOCK) {
                 while (!isGameOver) {
                     this.sleepFor(this.dropSpeed);
                     if (!isPaused) {
@@ -82,9 +82,9 @@ public class GamePanel extends JPanel {
                                 this.playSound(Constants.LAND_SOUND_EFFECT);
                                 this.updatePosition(this.shape, false);
                                 this.breakLines();
-                                lock.notify();
+                                MY_LOCK.notify();
                                 try {
-                                    lock.wait();
+                                    MY_LOCK.wait();
                                 } catch (InterruptedException e) {
                                     throw new RuntimeException(e);
                                 }
@@ -96,7 +96,7 @@ public class GamePanel extends JPanel {
                     }
 
                 }
-                lock.notify();
+                MY_LOCK.notify();
             }
         }).start();
     }
@@ -182,7 +182,7 @@ public class GamePanel extends JPanel {
     }
 
     private void rotate() {
-        final int rowAndColumn = 2;
+        int rowAndColumn = 2;
         int[][] distancesFromCenter = new int[this.shape.length][rowAndColumn];
         int[][] indexesInGrid = new int[this.shape.length][rowAndColumn];
         int i = 0;
